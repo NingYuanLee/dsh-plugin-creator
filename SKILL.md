@@ -11,6 +11,8 @@ metadata:
 
 # DSH 插件统一要求
 
+本文的 `D:\tools\dsh-plugins` 和 `D:\tools\skills` 是原作者本机示例，不是其他用户的强制路径。使用当前用户指定或已有的插件目录，从本技能目录的 `scripts/` 调用脚手架；未指定插件目录时确认位置。下文提及的具体插件是参考案例，不要求其他用户已有这些仓库。
+
 > 适用：本目录（`D:\tools\dsh-plugins`）下所有新建/维护的 DeepSeek Harness（DSH）插件仓库。
 > 基线依据：官方文档优先，其次 awesome-dsh-plugin 的收录条件。两边冲突时按官方写。本目录四个已验收插件（dsh-grok-byapi / dsh-gui-auth-url / dsh-image-viewer-pro / dsh-system-agents-md）只作实现参照。
 > 最后更新：2026-10-20（宿主 dsh 0.2.1-rc.2）。
@@ -51,11 +53,11 @@ metadata:
 新建插件不要手抄模板，直接用技能自带脚本：
 
 ```powershell
-node 'D:\tools\skills\dsh-plugin-creator\scripts\new-plugin.mjs' `
-  --name dsh-example --author '<GitHub 用户名>' --title 'Example' --description 'One-line description.'
+node '<本技能目录>\scripts\new-plugin.mjs' `
+  --name dsh-example --author '<GitHub 用户名>' --dir '<插件目录>' --title 'Example' --description 'One-line description.'
 ```
 
-- 默认生成到 `D:\tools\dsh-plugins\dsh-<name>`，可用 `--dir` 指定。
+- 可用 `--dir` 指定生成位置；未指定时，Windows 且存在 `D:\tools\dsh-plugins` 时使用该目录，否则使用当前工作目录。
 - 用 `--author` 或环境变量 `GITHUB_USER` 指定作者；默认仓库地址由作者和包名组成，也可用 `--repo` 显式指定。生成后核对作者和仓库地址。
 - 追加 `--ui` 生成带 `dsh.client` 的 Web 客户端半区；追加 `--private` 生成 `private: true` 的本地私有插件（按 §0.1 豁免 publishConfig/repository/CI）。
 - 脚本拒绝非法包名、拒绝写入非空目录；生成后打印后续步骤。

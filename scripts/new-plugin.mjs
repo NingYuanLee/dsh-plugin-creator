@@ -33,7 +33,9 @@ if (!author) fail('provide --author <github-user> or set GITHUB_USER')
 const repo = arg('--repo', `https://github.com/${author}/${name}`)
 const withUi = flagSet.has('--ui')
 const isPrivate = flagSet.has('--private')
-const target = resolve(arg('--dir', `D:/tools/dsh-plugins/${name}`))
+const defaultRoot = process.platform === 'win32' && existsSync('D:/tools/dsh-plugins')
+  ? 'D:/tools/dsh-plugins' : process.cwd()
+const target = resolve(arg('--dir', join(defaultRoot, name)))
 
 if (existsSync(target) && readdirSync(target).length > 0) {
   fail(`target directory is not empty: ${target}`)
