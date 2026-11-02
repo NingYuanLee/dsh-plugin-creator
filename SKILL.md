@@ -14,16 +14,16 @@ metadata:
 本文的 `D:\tools\dsh-plugins` 和 `D:\tools\skills` 是原作者本机示例，不是其他用户的强制路径。使用当前用户指定或已有的插件目录，从本技能目录的 `scripts/` 调用脚手架；未指定插件目录时确认位置。下文提及的具体插件是参考案例，不要求其他用户已有这些仓库。
 
 > 适用：本目录（`D:\tools\dsh-plugins`）下所有新建/维护的 DeepSeek Harness（DSH）插件仓库。
-> 基线依据：官方文档优先，其次 awesome-dsh-plugin 的收录条件。两边冲突时按官方写。本目录四个已验收插件（dsh-grok-byapi / dsh-gui-auth-url / dsh-image-viewer-pro / dsh-system-agents-md）只作实现参照。
-> 最后更新：2026-10-20（宿主 dsh 0.2.1-rc.2）。
+> 依据分层：DSH 官方行为与要求、awesome 社区收录条件、个人项目约定分别适用；社区规则只对投稿该目录生效。固定版本只是本机已采用的基线，变更时以目标宿主及实测为准。
+> 核对日期：2026-11-02；文档是动态的，执行发布或升级前重新核对。
 
 ## 0. 一句话标准
 
-**每个插件都必须能被 `dsh plugin add` 安装、通过官方清单与展示规范、带测试与 CI、仓库/包结构一致；发布前必须满足本文件的 MUST 项。**
+**可分发的自有插件应能在目标 profile 安装并启用，测试其实际行为和打包内容，再按本文件的个人发布约定检查。** 标为 MUST 的条目是本技能的项目约定，除非明确标为官方或社区要求，不应误称官方强制。
 
-官方没有“插件审核规范”，也没有官方插件市场；官方只定义打包/安装、format-1 索引、显示元信息与 Web 样式规范。本文件是这三个官方文档的落地版。
+官方定义 bundle、profile、安装、索引和界面等行为；awesome 是独立社区目录。DSH 自带官方插件条目，但不预设第三方 Discover 索引源。
 
-官方文档（master，2026-10-18 可读）：
+官方文档（master，2026-11-02 核对）：
 
 - 打包与安装：https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/develop/basic/publish.md
 - 插件市场（format-1 / Discover）：https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/plugin-market.md
@@ -39,14 +39,14 @@ metadata:
 - §7 的 CI 与最低测试集（可保留最小自测脚本）；
 - §8 分发与版本、§9 市场收录。
 
-以下项**不可豁免**（否则装不上或加载失败）：
+以下是本机私有插件的约定和验收要求，不全是官方安装前提：
 
 - `dsh.manifestVersion: 1`、`dsh.bundle.patch` 存在且可解析；
 - `cordis.patch.yml` 行 id/name 与包名一致；
 - `locale/en.json` + `locale/zh.json` 的 `meta.title/description`（用于插件列表显示）；
 - profile 以 `link:` 安装后，能在干净会话里被 Loader 加载（启动无报错）。
 
-示例：`dsh-system-agents-md`（本地私有：系统提示段 + 静默守卫）即按此例外维护，不发布、不建 CI，只有最小文件布局。
+本机是否适用此例外，以目标插件当前的 `private`、实际分发方式及用户要求为准。
 
 ## 0.2 脚手架：一条命令生成骨架
 
@@ -61,7 +61,7 @@ node '<本技能目录>\scripts\new-plugin.mjs' `
 - 用 `--author` 或环境变量 `GITHUB_USER` 指定作者；默认仓库地址由作者和包名组成，也可用 `--repo` 显式指定。生成后核对作者和仓库地址。
 - 追加 `--ui` 生成带 `dsh.client` 的 Web 客户端半区；追加 `--private` 生成 `private: true` 的本地私有插件（按 §0.1 豁免 publishConfig/repository/CI）。
 - 脚本拒绝非法包名、拒绝写入非空目录；生成后打印后续步骤。
-- 生成物已覆盖 §1 目录布局、§2 清单基线、§4 展示元信息、§7 测试与 CI 骨架，之后只需改业务代码与文档。
+- 生成物是待完善的骨架，不代表完成 §7 的测试或实际安装验收。生成后填写真实行为、凭据和数据保留说明；先运行 `npm install --package-lock-only --ignore-scripts` 并提交生成的 lockfile，再使用 `npm ci --ignore-scripts`。UI 插件需自行实现客户端、截图和构建验证。
 
 ## 0.3 安装和更新自有插件
 
@@ -131,14 +131,14 @@ dsh-<name>/
 }
 ```
 
-硬性规则：
+本机可分发插件约定（具体官方与社区规则另行标注）：
 
 1. `dsh.manifestVersion` 必须为 `1`；`dsh.bundle.patch` 指向根目录的 `cordis.patch.yml`。
-2. 只声明 `dsh.client` 而没有 `dsh.bundle` 的包**不可安装**。
+2. 只声明 `dsh.client` 而没有 `dsh.bundle` 时，CLI 可将包作为普通依赖安装，但不会激活 bundle 层；awesome 收录要求声明 bundle。
 3. `engines.dsh` 用当前已验证的宿主范围；升级宿主并实测后再改。当前统一值：`>=0.2.1-rc.2 <0.3.0-0`。
 4. `engines.node` 统一 `>=22.19.0`。
-5. 官方 `@deepseek-ai/*` 包一律放 `peerDependencies`，不要放 `dependencies`；不要写精确预发布版本。
-6. peer 范围必须带**显式预发布分支**，否则会静默排除所有 rc/alpha 宿主。当前统一值：`>=0.2.1-0 <0.3.0`（cordis 用 `~4.0.4`，schemastery 用 `~3.18.4`，仅在使用时声明）。
+5. 社区推荐将宿主提供的 `@deepseek-ai/*` 包声明为 `peerDependencies`，以避免重复宿主实例；按实际使用和目标宿主验证，不将此视为所有包拓扑的官方硬规则。
+6. 支持预发布版本时，每个需要支持的 `major.minor.patch` 预发布元组都要有对应的带预发布号比较符，可用 `||` 分支；不要假设 `>=0.2.1-0 <0.3.0` 也覆盖 `0.2.2-rc`。本机当前 `dsh-tools` 基线仅覆盖 0.2.1 预发布元组及范围内稳定版；按实际目标测试。cordis 用 `~4.0.4`，schemastery 用 `~3.18.4`，仅在使用时声明。
 7. `files` 用白名单：运行时代码、`cordis.patch.yml`、`locale`、`icon.svg`、`screenshots.json`、README/CHANGELOG/SECURITY/LICENSE。不要漏发资源，也不要把 `test/`、`scripts/`、`.github/`、`node_modules/` 打进包。
 8. 不允许安装期构建脚本（`prepare`/`postinstall`）；要发布就发预构建产物（如 `lib/client.js` 提交进仓库）。
 9. `repository` 必须指回本仓库；npm 上架后市场靠它关联条目。
@@ -151,7 +151,7 @@ dsh-<name>/
       name: dsh-example
 ```
 
-- 行 `id` 与 `name` 用包名；多组件插件可用子路径（如 `dsh-example/client`），每个子路径都要在 `exports` 中导出。
+- 本机约定行 `id` 与 `name` 用包名，方便追踪；官方允许二者不同，`name` 必须能解析到对应模块。多组件插件可用子路径（如 `dsh-example/client`），每个子路径都要在 `exports` 中导出。
 - 修改后跑 `dsh --profile <测试profile> --dump-config`，确认出现该层且无解析错误。
 
 ## 4. 展示元信息（MUST）
@@ -190,7 +190,7 @@ dsh-<name>/
 
 ## 6. 文档（MUST）
 
-- `README.md` 英文主文档 + `README.zh.md` 中文；两边的 `##` 级标题保持一致（本目录可发布插件都按这个规则写了测试；本地私有插件见 §0.1）。
+- 本机可发布插件推荐英文主文档 + 中文文档，两边的章节语义和覆盖范围保持一致，标题文字不要求逐字相同；本地私有插件见 §0.1。
 - README 必须含：
   - 一句话价值 + 实际行为（不夸大，与代码一致）；
   - 可复制安装命令：`dsh plugin --profile web add <pkg>`（npm 发布前写 git/tarball 形式）；
@@ -239,6 +239,7 @@ jobs:
       - run: npm pack --dry-run
 ```
 
+- `npm ci` 需要已提交且与清单一致的 lockfile；按项目依赖生成并提交，见 [npm ci](https://docs.npmjs.com/cli/v11/commands/npm-ci/)。
 - 有客户端构建的插件再加：`npm run build` + `git diff --exit-code -- lib/client.js`。
 - 测试不依赖网络与真实凭据；凭据相关逻辑用 stub。
 
@@ -263,16 +264,16 @@ jobs:
 ### 官方
 
 - 给插件仓库加 topic [`dsh-plugin`](https://github.com/topics/dsh-plugin)，便于被发现。见[官方 README](https://github.com/deepseek-ai/deepseek-harness/blob/master/README.md) 的 Community and support。
-- Discover 不自带目录。索引格式见[插件市场](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/plugin-market.md)。不自建 `market/index.json`。
+- Discover 不预设索引源；按需要添加可信索引，也可按[官方格式](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/plugin-market.md)自行发布。自建并非发布插件的必需步骤。
 
 ### awesome-dsh-plugin
 
 可分发插件收录到 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)。
 
-- PR 只新增 `data/plugins/<owner>__<repo>.yml`：`url`、`name`、`category`、`description.en`（`zh` 可选）。一个 PR 最多 3 条。
-- 条件：`dsh.bundle`、真实代码、仓库创建满 1 天、仓库 topic `dsh-plugin`、描述与代码一致。维护者会读代码。
+- 常规单仓库投稿新增 `data/plugins/<owner>__<repo>.yml`：`url`、`name`、`category`、`description.en`（`zh` 可选）。一个 PR 最多 3 条。
+- 按[社区投稿指南](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md)核对：`dsh.bundle`、真实代码、仓库创建满 1 天、持续维护、topic `dsh-plugin`、描述与代码一致。维护者读代码；纯依赖列表聚合包不单独收录。monorepo 子包路径和文件名按指南处理；描述含 `: ` 时需 YAML 引号。
 - 分类：模型提供方 `model`，界面增强 `ui`，工具 `tools`，主题 `theme`，其余按实际功能选最贴切一类。
-- npm 包的 `repository` 必须指回该仓库。format-1 索引是 `https://awesome-dsh-plugin.com/index.json`，只收有 npm 包、版本和发布时间的条目；未发布时只能 git/tarball 安装。版本由目录探测 npm `dist-tags.latest`，不要在 YAML 里写版本。Discover 里使用这份索引。
+- 使用 Release tarball 时，`latest/download/` 应配不含版本号的稳定文件名，或将版本化文件名固定到具体 tag。npm 包的 `repository` 应指回该仓库。社区目录和 Discover 索引是不同产物；索引是否包含某个版本，应实际核对其 `https://awesome-dsh-plugin.com/index.json`，不要把合并 YAML 当作索引更新或 npm 发布成功。
 
 ## 10. 新建插件检查清单（逐项打勾）
 
@@ -298,16 +299,16 @@ jobs:
 | 插件 | 形态 | 可参考点 |
 |---|---|---|
 | `dsh-grok-byapi` | LLM provider + Web 客户端 + 构建产物 | 客户端构建与 CI diff、settings 页、凭据、媒体任务、README 双语文档 |
-| `dsh-gui-auth-url` | 纯工具（无客户端） | 最小清单、无构建纯 ESM、check-pack 脚本、manifest 测试 |
+| `dsh-gui-auth-url` | 工具 + Web 客户端 | 进程树生命周期、会话作业归属、打包与回归测试 |
 | `dsh-image-viewer-pro` | 纯 Web 客户端 | 单文件 ESM + `dsh.client`、screenshots.json、CDP 冒烟、样式 token |
-| `dsh-system-agents-md` | 本地私有（系统提示段 + 静默守卫） | 宿主级 `agent/pre-step` 注入提醒、文件监听热更新、`private: true` 最小布局（见 §0.1） |
+| `dsh-jev-mcp` | MCP + Web 客户端 | 工具前缀、凭据与环境传递说明 |
+| `dsh-personal-system-rules` | 系统规则 + Web 客户端 | 本机个性化配置案例 |
 
 模板片段（复制后改名字即可）：
 
 `src/index.js`
 
 ```js
-import type {} from '@deepseek-ai/cordis'
 export const name = 'dsh-example'
 export const inject = []
 export function apply(ctx) {
@@ -319,10 +320,22 @@ export function apply(ctx) {
 
 ## 12. 常见被拒/踩坑
 
-1. 只写 `dsh.client`、没有 `dsh.bundle` → 官方安装要求不满足，包不可安装。awesome 同样拒收。
+1. 只写 `dsh.client`、没有 `dsh.bundle` → 可能安装为普通依赖但不激活 bundle；awesome 不收。
 2. peer 范围写成 `>=0.2.0-rc.2 <0.3.0`（看似宽）→ 0.2.1 预发布宿主被静默排除，pnpm 报 ERESOLVE。
 3. README 描述夸大或与代码不符 → awesome 维护者读码后打回。
 4. npm 包 `repository` 与收录仓库不一致 → awesome 无法把 npm `latest` 关联到该仓库。
 5. 截图写死第三方图床 → 隐私原因被拒；用仓库相对路径或 GitHub 托管 URL。
 6. 打包漏 `SECURITY.md`/`locale`/构建产物 → 装完显示原始包名或直接加载失败。
-7. 改 `engines.dsh` 未实测 → 安装门禁拒绝；改范围必须在本机干净 profile 实测。
+7. 修改 `engines.dsh` 并不证明兼容；范围排除当前宿主会触发门禁，范围包含也可能运行失败。变更后在目标版本的干净 profile 实测。
+
+## 13. 经验证的实践与个人案例
+
+**通用：**安装验收检查目标 profile 的实际加载与核心功能；为目标宿主的每个预发布版本测试 SemVer 范围。展示文案按 locale → 包清单 → 名称回退，图标缺失会回退占位图；见[官方插件管理器](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/client/ui-plugin-manager/README.md)。发布前检查 tarball 中的运行时代码与资源，不能仅靠单元测试判断。
+
+**社区投稿：**按 [awesome 投稿指南](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md)复核最新要求：描述与代码一致、不手改生成的 README；仓库创建满一天、处于维护状态；每个 PR 最多三条。收录不等于安全审计。
+
+**个人案例（有适用场景时参考）：**
+
+- `dsh-gui-auth-url`：Windows 通过 cmd shim 启动子进程时，先终止进程树再回退根进程；异步退出回调只清理自己持有租约的目录，防止旧进程删除新实例资源。作业 owner 使用宿主要求的 session ID，并测试重启与迟到退出。见本机 `dsh-gui-auth-url/CHANGELOG.md`。
+- `dsh-grok-byapi`：将模型发现等网络操作放到后台，保证网络慢或缺凭据时仍能启动并修复设置；分开记录依赖解析约束、已验证宿主与能力范围。见本机 `dsh-grok-byapi/CHANGELOG.md`、`README.zh.md`。
+- `dsh-jev-mcp`：写明宿主工具前缀、凭据存放及敏感环境变量传递边界；按实际插件核验，不把某个 MCP 的行为推广到其他实现。见本机 `dsh-jev-mcp/README.zh.md`。

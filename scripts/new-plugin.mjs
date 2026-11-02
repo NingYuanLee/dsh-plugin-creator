@@ -108,9 +108,7 @@ files.set(
 
 files.set(
   'src/index.js',
-  `import type {} from '@deepseek-ai/cordis'
-
-export const name = '${name}'
+  `export const name = '${name}'
 export const inject = []
 
 export function apply(ctx) {
@@ -377,6 +375,6 @@ for (const rel of listed) console.log(`  ${rel}`)
 console.log('')
 console.log('next:')
 console.log(`  cd ${target}`)
+if (!isPrivate) console.log('  npm install --package-lock-only --ignore-scripts   # generate and commit lockfile for CI')
 console.log('  npm test')
-if (!isPrivate) console.log(`  npm publish --tag latest   # after the pack check passes`)
-console.log('  then work through §10 of the dsh-plugin-creator skill checklist')
+console.log('  replace placeholder code and documentation, then work through §10 of the skill checklist')
