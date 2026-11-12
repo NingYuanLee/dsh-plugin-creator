@@ -259,6 +259,29 @@ jobs:
 - npm 包的 `repository` 必须指回本仓库。
 - 打 tag 前：`npm test`、`npm run build`（如有）、`npm pack --dry-run`、`git diff` 全干净。
 
+### 本地 AGENTS.md（不提交）
+
+- 每个插件仓库根目录放一份本地 `AGENTS.md`，只写最短发布流程，供 agent 读取；不要提交，也不加入 `package.json.files`。
+- 忽略方式优先 `.git/info/exclude`（本地、永不推送）；新仓库也可写进 `.gitignore`。
+- 模板：
+
+```md
+# AGENTS.md（本地文件，不提交）
+
+发布流程：
+
+1. `npm version X.Y.Z --no-git-tag-version`，同步更新 `CHANGELOG.md`。
+2. `npm test && npm run check && npm run build`。
+3. 提交并推送 `main`：只跑 CI，不发布。
+4. `git tag vX.Y.Z && git push origin vX.Y.Z`；Release workflow 用 OIDC 自动发布 npm，无需本地登录或 2FA。
+5. 数分钟后核对：`npm view <包名> version dist-tags` 与 GitHub Release。
+
+本文件仅本地使用，不要提交。
+```
+
+- 验证：`git check-ignore -v AGENTS.md` 命中 exclude 或 gitignore，`git status --short` 不出现该文件。
+- `scripts/new-plugin.mjs` 已自动生成 `AGENTS.md`，并在 `.gitignore` 中写入忽略项。
+
 ## 9. 收录
 
 ### 官方
@@ -290,6 +313,7 @@ jobs:
 - [ ] 测试覆盖第 7 节最低测试集；`npm test` 全绿
 - [ ] CI：Node 22.19 + 24、ubuntu + windows，`npm ci --ignore-scripts` 通过
 - [ ] `npm pack --dry-run` 内容正确（含资源、不含开发文件）
+- [ ] 根目录有本地 `AGENTS.md`（最短发布流程），已被 `.git/info/exclude` 或 `.gitignore` 忽略
 - [ ] 版本 stable、`repository` 指回仓库；npm 发布（或 tarball）完成
 - [ ] 仓库 topic 含 `dsh-plugin`
 - [ ] awesome 条目一个 YAML PR

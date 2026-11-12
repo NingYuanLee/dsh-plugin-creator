@@ -262,6 +262,22 @@ SOFTWARE.
 `,
 )
 
+const agentsTemplate = [
+  '# AGENTS.md（本地文件，不提交）',
+  '',
+  '发布流程：',
+  '',
+  '1. `npm version X.Y.Z --no-git-tag-version`，同步更新 `CHANGELOG.md`。',
+  '2. `npm test && npm run check && npm run build`。',
+  '3. 提交并推送 `main`：只跑 CI，不发布。',
+  '4. `git tag vX.Y.Z && git push origin vX.Y.Z`；Release workflow 用 OIDC 自动发布 npm，无需本地登录或 2FA。',
+  '5. 数分钟后核对：`npm view ' + name + ' version dist-tags` 与 GitHub Release。',
+  '',
+  '本文件仅本地使用，不要提交。',
+].join('\n') + '\n'
+files.set('AGENTS.md', agentsTemplate)
+files.set('.gitignore', 'AGENTS.md\n')
+
 const uiAssertions = withUi
   ? `
 test('declares a web client half', () => {
